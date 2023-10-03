@@ -6,7 +6,9 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+//import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.example.airnet.Api.Api
 import com.example.airnet.Model.AddAdres.Adres
 import com.example.airnet.Model.House.House
@@ -15,6 +17,7 @@ import com.example.airnet.databinding.ActivityMainBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -23,10 +26,10 @@ class MainActivity : AppCompatActivity() {
     var houseNumberList = arrayListOf<String>("Выберите дом")
     private lateinit var binding: ActivityMainBinding
     var streetListModel = arrayListOf<Street>()
-    var streetList = ArrayList<String>()
+    var streetList = arrayListOf<String>()
 
     var houseListModel = arrayListOf<House>()
-    var houseList = ArrayList<String>()
+    var houseList = arrayListOf<String>()
 
     var Adres = Adres("","","","")
 
@@ -34,8 +37,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         searchHouse()
+
 
         binding.btnSend.setOnClickListener{
             Adres.street = ""
@@ -77,6 +80,9 @@ class MainActivity : AppCompatActivity() {
 
     //Инициализация первой строки
     private fun searchHouse() {
+        //val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, getAllStreet())
+
+        //languages += getAllStreet()
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, getAllStreet())
         binding.searchAdres.threshold = 3
         binding.searchAdres.setAdapter(adapter)
@@ -100,9 +106,9 @@ class MainActivity : AppCompatActivity() {
 
 
     //Добавление спинера
-    fun spinner(streat: ArrayList<String>)=with(binding) {
+    fun spinner(streats: ArrayList<String>)=with(binding) {
 
-        val arrayAdapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, streat)
+        val arrayAdapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, streats)
         spinner2.adapter = arrayAdapter
         spinner2.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
@@ -131,29 +137,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    //Получение улиц
-    private fun getAllStreet(): ArrayList<String> {
-
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://stat-api.airnet.ru/v2/utils/get/")
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val retrofitAPI = retrofit.create(Api::class.java)
-        CoroutineScope(Dispatchers.Main).launch {
-            val street = retrofitAPI.getStreet()
-
-            Log.i("sdasd", street.count().toString())
-            Log.i("sdasd", street.toString())
-            runOnUiThread {
-                for (i in 0..street.count() - 1) {
-                    streetListModel.add(Street(street[i].street_id, street[i].street))
-                    streetList.add(street[i].street)
-                }
-            }
-        }
-        return streetList
-    }
 
     //Получение домов
     private fun getAllHouse(street_id: String) {
@@ -174,11 +157,36 @@ class MainActivity : AppCompatActivity() {
                 for (i in 0..house.count() - 1) {
                     houseListModel.add(House(house[i].house_id, house[i].house))
                     houseList.add(house[i].house)
-
                 }
                 spinner(houseList)
+                Log.i("houseListModel", houseListModel.toString())
+                Log.i("houseList", houseList.toString())
             }
         }
+    }
+
+    private fun getAllStreet():ArrayList<String> {
+
+        val retrofit = Retrofit.Builder()
+            .baseUrl("https://stat-api.airnet.ru/v2/utils/get/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val retrofitAPI = retrofit.create(Api::class.java)
+        CoroutineScope(Dispatchers.Main).launch {
+            val street = retrofitAPI.getStreet()
+
+            runOnUiThread {
+                for (i in 0..street.count() - 1) {
+                    streetListModel.add(Street(street[i].street_id, street[i].street))
+                    streetList.add(street[i].street)
+                }
+                Log.i("streetListModel", streetListModel.toString())
+                Log.i("streetList", streetList.toString())
+            }
+        }
+
+        return streetList
     }
 
 
